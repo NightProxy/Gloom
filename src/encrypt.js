@@ -1,47 +1,49 @@
+// encrypt.js
+
 class Crypts {
-    static encode(str) {
+    static encode(str, key) {
       return encodeURIComponent(
         str
           .toString()
           .split("")
-          .map((char, ind) => (ind % 2 ? String.fromCharCode(char.charCodeAt() ^ 2) : char))
+          .map((char, ind) => (ind % 2 ? String.fromCharCode(char.charCodeAt() ^ key.charCodeAt(ind % key.length)) : char))
           .join("")
       );
     }
   
-    static decode(str) {
+    static decode(str, key) {
       if (str.charAt(str.length - 1) === "/") {
         str = str.slice(0, -1);
       }
       return decodeURIComponent(
         str
           .split("")
-          .map((char, ind) => (ind % 2 ? String.fromCharCode(char.charCodeAt() ^ 2) : char))
+          .map((char, ind) => (ind % 2 ? String.fromCharCode(char.charCodeAt() ^ key.charCodeAt(ind % key.length)) : char))
           .join("")
       );
     }
   }
   
-  function encryptUrl(url) {
-    return Crypts.encode(url);
+  function encryptUrl(url, encryption) {
+    switch (encryption.method) {
+      case 'base64':
+        return Buffer.from(url).toString('base64');
+      case 'xor':
+        return Crypts.encode(url, encryption.key);
+      default:
+        return url;
+    }
   }
   
   function decryptUrl(path, encryption) {
-    let decryptedUrl;
-    switch (encryption) {
+    switch (encryption.method) {
       case 'base64':
-        decryptedUrl = Buffer.from(path, 'base64').toString('ascii');
-        break;
+        return Buffer.from(path, 'base64').toString('ascii');
       case 'xor':
-        decryptedUrl = Crypts.decode(path);
-        break;
-      case 'none':
-        decryptedUrl = path;
-        break;
+        return Crypts.decode(path, encryption.key);
       default:
-        throw new Error('Unsupported encryption method.');
+        return path;
     }
-    return decryptedUrl;
   }
   
   module.exports = {

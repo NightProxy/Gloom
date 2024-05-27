@@ -1,15 +1,12 @@
-const { encryptUrl } = require('./encrypt');
-const config = require('./config');
-
-function rewriteUrls(body) {
-  // This regex will match http and https URLs within href, src, and action attributes
-  const urlRegex = /(?:href|src|action)="(http[s]?:\/\/[^"]+)"/g;
-  return body.replace(urlRegex, (match, p1) => {
-    const encryptedUrl = encryptUrl(p1);
-    return match.replace(p1, `${config.prefix}${encryptedUrl}`);
-  });
+function rewriteUrls(root, prefix, encryptUrl) {
+    ['href', 'src', 'action'].forEach((attribute) => {
+        root.querySelectorAll(`[${attribute}]`).forEach((element) => {
+            const url = element.getAttribute(attribute);
+            if (url && url.startsWith('http')) {
+                element.setAttribute(attribute, `${prefix}${encryptUrl(url)}`);
+            }
+        });
+    });
 }
 
-module.exports = {
-  rewriteUrls,
-};
+module.exports = { rewriteUrls };
