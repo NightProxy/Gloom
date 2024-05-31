@@ -1,16 +1,19 @@
 {
-    "name": "gloom-proxy",
-    "version": "1.0.0",
-    "description": "A simple proxy server that rewrites URLs and handles encryption.",
-    "main": "index.js",
-    "scripts": {
-      "start": "node index.js"
-    },
-    "dependencies": {
-      "express": "^4.17.1",
-      "node-html-parser": "^3.3.4",
-      "request": "^2.88.2"
-    },
-    "author": "Amplify",
-    "license": "ISC"
-  }
+  "name": "gloom-proxy",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "A simple proxy server that rewrites URLs and handles encryption.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.17.1",
+    "cors": "^2.8.5",
+    "chalk": "^5.2.0",
+    "node-html-parser": "^3.3.4",
+    "request": "^2.88.2"
+  },
+  "author": "Amplify",
+  "license": "ISC"
+}

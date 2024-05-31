@@ -1,16 +1,16 @@
 // server.js
 
-const express = require('express');
-const request = require('request');
-const { parse } = require('node-html-parser');
-const { config } = require('./config.js');
-const { encryptUrl, decryptUrl } = require('./encrypt');
-const { handleError } = require('./error');
-const { rewriteUrls } = require('./rewrite');
-const fs = require('fs');
-const path = require('path');
+import express from 'express';
+import request from 'request';
+import { parse } from 'node-html-parser';
+import { config } from './config.js';
+import { encryptUrl, decryptUrl } from './encrypt.js';
+import { handleError } from './error.js';
+import { rewriteUrls } from './rewrite.js';
+import fs from 'fs';
+import path from 'path';
 
-function createGloomServer() {
+export function createGloomServer() {
   const app = express();
 
   // Dynamically load and apply middleware from the ./src/middleware directory
