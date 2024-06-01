@@ -1,40 +1,39 @@
 import http from 'http';
 import express from 'express';
 import { createGloomServer } from './src/server.js';
-import * as config from './src/config.js';import path from 'path';
+import * as config from './src/config.js';
+import path from 'path';
 import cors from 'cors';
 import chalk from 'chalk';
 
 const PORT = process.env.PORT || 8080;
 
-const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(express.static(process.cwd() + "/public"));
-app.use(cors());
+(async () => {
+  const app = express();
+  const gloomApp = await createGloomServer();
+  app.use(express.json());
+  app.use(config.prefix, gloomApp); // Mount the Gloom server on a specific path
+  app.use(express.urlencoded({ extended: true }));
+  app.use(express.static(process.cwd() + "/public"));
+  app.use(cors());
 
-app.get("/", (req, res) => {
-  res.sendFile(path.join(process.cwd(), "/public/index.html"));
-});
-
-app.get("/search=:query", async (req, res) => {
-  const { query } = req.params;
-
-  const reply = await fetch(`http://api.duckduckgo.com/ac?q=${query}&format=json`).then((resp) => resp.json());
-
-  res.send(reply);
-});
-
-const gloomApp = createGloomServer();
+  app.get("/", (req, res) => {
+    res.sendFile(path.join(process.cwd(), "/public/index.html"));
+  });
+  
+  app.get("/search=:query", async (req, res) => {
+    const { query } = req.params;
+  
+    const reply = await fetch(`http://api.duckduckgo.com/ac?q=${query}&format=json`).then((resp) => resp.json());
+  
+    res.send(reply);
+  });
+})();
 
 const server = http.createServer((req, res) => {
-  if (req.url.startsWith(config.prefix)) {
-    req.url = req.url.slice(config.prefix.length);
-    gloomApp(req, res);
-  } else {
-    app(req, res);
-  }
+  app(req, res);
 });
+
 server.on("listening", () => {
   const address = server.address();
   var theme = chalk.hex("#7035c4");

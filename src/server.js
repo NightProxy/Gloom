@@ -1,5 +1,3 @@
-// server.js
-
 import express from 'express';
 import request from 'request';
 import pkg from 'node-html-parser';
@@ -24,7 +22,6 @@ export async function createGloomServer() {
     }
   }
 
-  // Middleware to decrypt URLs
   // Middleware to decrypt URLs
   app.use(config.prefix, (req, res, next) => {
     let path = req.path.slice(config.prefix.length + 1); // Remove the prefix and the leading slash
