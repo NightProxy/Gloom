@@ -2,7 +2,8 @@
 
 import express from 'express';
 import request from 'request';
-import { parse } from 'node-html-parser';
+import pkg from 'node-html-parser';
+const { parse } = pkg;
 import { config } from './config.js';
 import { encryptUrl, decryptUrl } from './encrypt.js';
 import { handleError } from './error.js';
@@ -10,23 +11,26 @@ import { rewriteUrls } from './rewrite.js';
 import fs from 'fs';
 import path from 'path';
 
-export function createGloomServer() {
+export async function createGloomServer() {
   const app = express();
 
   // Dynamically load and apply middleware from the ./src/middleware directory
-  const middlewarePath = path.join(__dirname, 'src', 'middleware');
-  fs.readdirSync(middlewarePath).forEach(file => {
-    const middleware = require(path.join(middlewarePath, file));
-    if (typeof middleware === 'function') {
-      app.use(middleware);
+  const middlewarePath = path.join(process.cwd(), 'src', 'middleware');
+  const files = fs.readdirSync(middlewarePath);
+  for (const file of files) {
+    const middleware = await import(path.join(middlewarePath, file));
+    if (typeof middleware.default === 'function') {
+      app.use(middleware.default);
     }
-  });
+  }
 
   // Middleware to decrypt URLs
+  // Middleware to decrypt URLs
   app.use(config.prefix, (req, res, next) => {
-    let path = req.path.slice(config.prefix.length); // Remove the prefix
+    let path = req.path.slice(config.prefix.length + 1); // Remove the prefix and the leading slash
+    let url = decodeURIComponent(path); // Decode the URL
     try {
-      req.proxiedUrl = decryptUrl(path, config.encryption);
+      req.proxiedUrl = decryptUrl(url);
       next();
     } catch (error) {
       handleError(error, req, res);
@@ -44,7 +48,7 @@ export function createGloomServer() {
 
       if (response.headers['content-type'] && response.headers['content-type'].includes('text/html')) {
         const root = parse(body.toString());
-        rewriteUrls(root, config.prefix, (url) => encryptUrl(url, config.encryption));
+        rewriteUrls(root, config.prefix, (url) => encryptUrl(url));
         res.end(root.toString());
       } else {
         res.end(body);
@@ -54,5 +58,3 @@ export function createGloomServer() {
 
   return app;
 }
-
-module.exports = { createGloomServer };
