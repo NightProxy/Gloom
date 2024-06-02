@@ -40,8 +40,8 @@ export async function createGloomServer(server) {
 
         if (response.headers.get('content-type') && response.headers.get('content-type').includes('text/html')) {
           const root = parse(body);
-          rewriteUrls(root, config.prefix, (url) => encryptUrl(url));
-
+          const test = rewriteUrls(root, config.prefix, (url) => encryptUrl(url));
+          console.log(test);
           // Inject the script tags for the middleware JavaScript files
           const files = fs.readdirSync(middlewarePath);
           const scriptTags = files.map(file => `<script src="/${config.prefix}/middleware/${file}"></script>`).join('\n');
