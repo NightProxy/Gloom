@@ -1,4 +1,4 @@
-// encrypt.js
+import { config } from './config.js';
 
 class crypts {
   static encode(str) {
@@ -25,22 +25,26 @@ class crypts {
 }
 
 export function encryptUrl(url) {
-  switch (encryption.method) {
+  switch (config.encryption.method) {
     case 'base64':
       return Buffer.from(url).toString('base64');
     case 'xor':
       return crypts.encode(url);
+    case 'none':
+      return url;
     default:
       return url;
   }
 }
 
 export function decryptUrl(path) {
-  switch (encryption.method) {
+  switch (config.encryption.method) {
     case 'base64':
       return Buffer.from(path, 'base64').toString('ascii');
     case 'xor':
       return crypts.decode(path);
+    case 'none':
+      return path;
     default:
       return path;
   }

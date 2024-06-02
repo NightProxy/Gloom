@@ -10,16 +10,9 @@ const PORT = process.env.PORT || 8080;
 
 (async () => {
   var app = express();
-  const gloomApp = await createGloomServer();
   app.use(express.json());
-  if (typeof config.prefix === 'string') {
-    app.use(config.prefix, gloomApp); // Mount the Gloom server on a the config prefix
-  } else {
-    console.error('config.prefix is not defined or not a string');
-  } // Mount the Gloom server on a the config prefix
   app.use(express.urlencoded({ extended: true }));
   app.use(express.static(process.cwd() + "/public"));
-  app.use(cors());
 
   app.get("/", (req, res) => {
     res.sendFile(path.join(process.cwd(), "/public/index.html"));
@@ -36,6 +29,8 @@ const PORT = process.env.PORT || 8080;
   const server = http.createServer((req, res) => {
     app(req, res);
   });
+
+  await createGloomServer(server);
 
   server.on("listening", () => {
     const address = server.address();
