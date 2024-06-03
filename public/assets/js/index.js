@@ -79,7 +79,7 @@ if (proxySetting == "uv") {
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
 
-    let encodedUrl = "/gloom/" + crypts.encode(search(address.value));
+    let encodedUrl = "/gloom/" + encodeURIComponent(search(address.value));
     
     location.href = encodedUrl;
   });
