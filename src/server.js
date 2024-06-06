@@ -41,7 +41,7 @@ export async function createGloomServer(server) {
     var decodedUrl = decodeURIComponent(path);
     var proxiedUrl = decryptUrl(decodedUrl);
 
-    if (reqUrl.pathname.startsWith(`/${config.prefix}/middleware/`)) {
+    if (reqUrl.pathname.startsWith(`/middleware/`)) {
       console.log(`Received request for ${req.url}`);
       console.log(`Decoded URL: ${decodedUrl}`);
       console.log(`Proxied URL: ${proxiedUrl}`);
@@ -86,7 +86,7 @@ export async function createGloomServer(server) {
         } catch (error) {
           handleError(error, req, res);
         }
-      } else if (config.proxy.method == "httpProxyMiddleware") {
+      } else if (config.proxy.method == "HPM") {
         console.log(`Received request for ${req.url}`);
         try {
           httpProxyMiddleware(req, res);
