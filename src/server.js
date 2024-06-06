@@ -8,6 +8,7 @@ import { rewriteUrls } from './rewrite.js';
 import fs from 'fs';
 import path from 'path';
 import fetch from 'node-fetch';
+import contentType from 'content-type';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import httpProxy from 'http-proxy';
 
@@ -45,7 +46,7 @@ export async function createGloomServer(server) {
       console.log(`Received request for ${req.url}`);
       console.log(`Decoded URL: ${decodedUrl}`);
       console.log(`Proxied URL: ${proxiedUrl}`);
-      var middlewarePath = path.join(process.cwd(), 'src/middleware', reqUrl.pathname.slice(`/${config.prefix}/middleware/`.length));
+      var middlewarePath = path.join(process.cwd(), 'src/middleware', reqUrl.pathname.slice(`/middleware/`.length));
       console.log(middlewarePath);
       fs.readFile(middlewarePath, (err, data) => {
         if (err) {
@@ -57,22 +58,64 @@ export async function createGloomServer(server) {
         res.writeHead(200);
         res.end(data);
       });
-    } else if (reqUrl.pathname.startsWith(config.prefix)) {
+    }
+    if (reqUrl.pathname.startsWith(config.prefix)) {
       if (config.proxy.method == "fetch") {
         console.log(`Received request for ${req.url}`);
+        // Extract the part of the URL after the prefix
+        let pathAfterPrefix = reqUrl.pathname.slice(config.prefix.length);
+        // Decode the URL
+        let decodedUrl;
+        try {
+          decodedUrl = decodeURIComponent(pathAfterPrefix);
+        } catch (err) {
+          console.error(`Failed to decode URL: ${err}`);
+          if (!res.headersSent) {
+            handleError(err, req, res);
+          }
+          return;
+        }
+
+        // Decrypt the URL
+        let proxiedUrl;
+        try {
+          proxiedUrl = decryptUrl(decodedUrl);
+        } catch (err) {
+          console.error(`Failed to decrypt URL: ${err}`);
+          if (!res.headersSent) {
+            handleError(err, req, res);
+          }
+          return;
+        }
+
         console.log(`Decoded URL: ${decodedUrl}`);
         console.log(`Proxied URL: ${proxiedUrl}`);
+
         try {
-          const response = await fetch(proxiedUrl);
-          const body = await response.text();
+          const asset_url = new URL(proxiedUrl);
+          const asset = await fetch(asset_url); // Get the asset from the website
 
-          res.writeHead(response.status, response.headers.raw());
+          if (!asset.ok) {
+            console.error(`Failed to fetch asset: ${asset.status} ${asset.statusText}`);
+            if (!res.headersSent) {
+              handleError(new Error(`Failed to fetch asset: ${asset.status} ${asset.statusText}`), req, res);
+            }
+            return;
+          }
 
-          if (response.headers.get('content-type') && response.headers.get('content-type').includes('text/html')) {
+          const contentTypeHeader = asset.headers.get('content-type');
+          const parsedContentType = contentTypeHeader ? contentType.parse(contentTypeHeader).type : '';
+
+          res.writeHead(asset.status, {
+            "Content-Type": parsedContentType,
+          });
+
+          if (parsedContentType.includes('text/html')) {
+            const body = await asset.text();
             const root = parse(body);
             const test = rewriteUrls(root, config.prefix, (url) => encryptUrl(url));
             console.log(test);
-            const files = fs.readdirSync(middlewarePath);
+            const files = fs.readdirSync(path.join(process.cwd(), 'src/middleware'));
             const scriptTags = files.map(file => `<script src="/${config.prefix}/middleware/${file}"></script>`).join('\n');
             const bodyElement = root.querySelector('body');
             if (bodyElement) {
@@ -81,24 +124,34 @@ export async function createGloomServer(server) {
 
             res.end(root.toString());
           } else {
-            res.end(body);
+            res.end(Buffer.from(await asset.arrayBuffer())); // Write the asset to the response
           }
         } catch (error) {
-          handleError(error, req, res);
+          console.error(`Error handling request: ${error}`);
+          if (!res.headersSent) {
+            handleError(error, req, res);
+          }
         }
       } else if (config.proxy.method == "HPM") {
         console.log(`Received request for ${req.url}`);
         try {
           httpProxyMiddleware(req, res);
         } catch (error) {
-          handleError(error, req, res);
+          console.error(`Error in HPM method: ${error}`);
+          if (!res.headersSent) {
+            handleError(error, req, res);
+          }
         }
       } else if (config.proxy.method === 'httpProxy') {
+        console.log(`Received request for ${req.url}`);
         try {
           const proxy = httpProxy.createProxyServer({});
           proxy.web(req, res, { target: proxiedUrl });
         } catch (error) {
-          handleError(error, req, res);
+          console.error(`Error in httpProxy method: ${error}`);
+          if (!res.headersSent) {
+            handleError(error, req, res);
+          }
         }
       }
     }

@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "chalk": "^5.2.0",
+    "content-type": "^1.0.5",
     "cors": "^2.8.5",
     "express": "^4.17.1",
     "http-proxy": "^1.18.1",

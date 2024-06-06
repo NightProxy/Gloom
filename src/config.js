@@ -4,7 +4,7 @@ export const config = {
         method: 'none'
       },
     proxy: {
-      method: 'httpProxy',
+      method: 'fetch',
       bare: "", //possibly going to make it so it can run off of wisp and bare servers.
       wisp: "",
       proxyServer: {
