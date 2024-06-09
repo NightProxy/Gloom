@@ -17,17 +17,17 @@ const PORT = process.env.PORT || 8080;
   app.get("/", (req, res) => {
     res.sendFile(path.join(process.cwd(), "/public/index.html"));
   });
-  
+
   app.get("/search=:query", async (req, res) => {
     const { query } = req.params;
-  
+
     const reply = await fetch(`http://api.duckduckgo.com/ac?q=${query}&format=json`).then((resp) => resp.json());
-  
+
     res.send(reply);
   });
 
   const server = http.createServer((req, res) => {
-    app(req, res);
+    if (!req.url.startsWith(config.prefix)){app(req, res)};
   });
 
   await createGloomServer(server);
@@ -44,34 +44,34 @@ const PORT = process.env.PORT || 8080;
     ╚██████╔╝███████╗╚██████╔╝╚██████╔╝██║ ╚═╝ ██║
      ╚═════╝ ╚══════╝ ╚═════╝  ╚═════╝ ╚═╝     ╚═╝
                                                   `)));
-  
+
     console.log(`  ${chalk.bold(host("Local System:"))}            http://${address.family === "IPv6" ? `[${address.address}]` : addr.address}${address.port === 80 ? "" : ":" + chalk.bold(address.port)}`);
-  
+
     console.log(`  ${chalk.bold(host("Local System:"))}            http://localhost${address.port === 8080 ? "" : ":" + chalk.bold(address.port)}`);
-  
+
     try {
       console.log(`  ${chalk.bold(host("On Your Network:"))}  http://${address.ip()}${address.port === 8080 ? "" : ":" + chalk.bold(address.port)}`);
     } catch (err) {
       // can't find LAN interface
     }
-  
+
     if (process.env.REPL_SLUG && process.env.REPL_OWNER) {
       console.log(`  ${chalk.bold(host("Replit:"))}           https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`);
     }
-  
+
     if (process.env.HOSTNAME && process.env.GITPOD_WORKSPACE_CLUSTER_HOST) {
       console.log(`  ${chalk.bold(host("Gitpod:"))}           https://${PORT}-${process.env.HOSTNAME}.${process.env.GITPOD_WORKSPACE_CLUSTER_HOST}`);
     }
-  
+
     if (process.env.CODESPACE_NAME && process.env.GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN) {
       console.log(`  ${chalk.bold(host("Github Codespaces:"))}           https://${process.env.CODESPACE_NAME}-${address.port === 80 ? "" : "" + address.port}.${process.env.GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN}`);
     }
   });
   server.listen(PORT);
-  
+
   process.on("SIGINT", shutdown);
   process.on("SIGTERM", shutdown);
-  
+
   function shutdown() {
     console.log("SIGTERM signal received: closing HTTP server");
     server.close();

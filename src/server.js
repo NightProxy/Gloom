@@ -1,4 +1,5 @@
 import url from 'url';
+import path from 'path';
 import pkg from 'node-html-parser';
 const { parse } = pkg;
 import { config } from './config.js';
@@ -6,7 +7,6 @@ import { encryptUrl, decryptUrl } from './encrypt.js';
 import { handleError } from './error.js';
 import { rewriteUrls } from './rewrite.js';
 import fs from 'fs';
-import path from 'path';
 import fetch from 'node-fetch';
 import contentType from 'content-type';
 import { createProxyMiddleware } from 'http-proxy-middleware';
@@ -38,22 +38,18 @@ export async function createGloomServer(server) {
 
   server.on('request', async (req, res) => {
     const reqUrl = url.parse(req.url, true);
-    var path = reqUrl.pathname.slice(config.prefix.length);
-    var decodedUrl = decodeURIComponent(path);
+    var reqPath = reqUrl.pathname.slice(config.prefix.length);
+    var decodedUrl = decodeURIComponent(reqPath);
     var proxiedUrl = decryptUrl(decodedUrl);
 
-    if (reqUrl.pathname.startsWith(`/middleware/`)) {
+    if (reqUrl.pathname.startsWith(`/${config.prefix}/middleware/`)) {
       console.log(`Received request for ${req.url}`);
       console.log(`Decoded URL: ${decodedUrl}`);
       console.log(`Proxied URL: ${proxiedUrl}`);
-      var middlewarePath = path.join(process.cwd(), 'src/middleware', reqUrl.pathname.slice(`/middleware/`.length));
+      var middlewarePath = path.join(process.cwd(), 'src/middleware', reqUrl.pathname.slice(`/${config.prefix}/middleware/`.length));
       console.log(middlewarePath);
       fs.readFile(middlewarePath, (err, data) => {
-        if (err) {
-          res.writeHead(404);
-          res.end(JSON.stringify(err));
-          return;
-        }
+        handleError(err, req, res)
 
         res.writeHead(200);
         res.end(data);
@@ -113,8 +109,8 @@ export async function createGloomServer(server) {
           if (parsedContentType.includes('text/html')) {
             const body = await asset.text();
             const root = parse(body);
-            const test = rewriteUrls(root, config.prefix, (url) => encryptUrl(url));
-            console.log(test);
+            console.log(root);
+            rewriteUrls(root, config.prefix, (url) => encryptUrl(url));
             const files = fs.readdirSync(path.join(process.cwd(), 'src/middleware'));
             const scriptTags = files.map(file => `<script src="/${config.prefix}/middleware/${file}"></script>`).join('\n');
             const bodyElement = root.querySelector('body');

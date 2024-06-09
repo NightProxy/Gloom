@@ -1,9 +1,11 @@
 export function rewriteUrls(root, prefix, encryptUrl) {
-    ['href', 'src', 'action'].forEach((attribute) => {
+    console.log("rewriting URLS...")
+    ['href', 'src'].forEach((attribute) => {
         root.querySelectorAll(`[${attribute}]`).forEach((element) => {
             const url = element.getAttribute(attribute);
             if (url && url.startsWith('http')) {
-                element.setAttribute(attribute, `${prefix}${encryptUrl(url)}`);
+                const encryptedUrl = encryptUrl(url);
+                element.setAttribute(attribute, `${prefix}/${encryptedUrl}`);
             }
         });
     });
