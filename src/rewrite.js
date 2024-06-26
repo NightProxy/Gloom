@@ -1,5 +1,5 @@
 import { config } from './config.js';
-import { encryptUrl } from './encrypt.js';
+import { encryptUrl, decryptUrl } from './encrypt.js';
 
 const cssImportRegex = /(?<=url\("?'?)[^"'][\S]*[^"'](?="?'?\);?)/g;
 const jsImportRegex = /(?<=import\s*['"])[^'"]+(?=['"])/g;
@@ -66,6 +66,91 @@ export function rewriteCssImport(styleContent, proxyUrl) {
         } catch (e) {
             console.error(`Invalid URL in CSS import: ${match}`, e);
             return match;
+        }
+    });
+}
+
+import { Syntax } from 'esotope-hammerhead';
+
+export function rewriteJs(ctx, proxyUrl) {
+    const { js } = ctx;
+
+    js.on(Syntax.Literal, (node, data, type) => {
+        // Rewrite URLs in string literals
+        if (typeof node.value === 'string') {
+            const decryptedUrl = decryptUrl(node.value);
+            if (decryptedUrl !== node.value) {
+                data.changes.push({
+                    start: node.start + 1,
+                    end: node.end - 1,
+                    node: type === 'rewrite' ? decryptedUrl : encryptUrl(decryptedUrl),
+                });
+            }
+        }
+    });
+
+    js.on(Syntax.ImportDeclaration, (node, data, type) => {
+        // Rewrite URLs in import declarations
+        if (node.source && typeof node.source.value === 'string') {
+            const decryptedUrl = decryptUrl(node.source.value);
+            if (decryptedUrl !== node.source.value) {
+                data.changes.push({
+                    start: node.source.start + 1,
+                    end: node.source.end - 1,
+                    node: type === 'rewrite' ? decryptedUrl : encryptUrl(decryptedUrl),
+                });
+            }
+        }
+    });
+
+    js.on(Syntax.ImportExpression, (node, data, type) => {
+        // Rewrite URLs in dynamic imports
+        if (node.source && typeof node.source.value === 'string') {
+            const decryptedUrl = decryptUrl(node.source.value);
+            if (decryptedUrl !== node.source.value) {
+                data.changes.push({
+                    start: node.source.start + 1,
+                    end: node.source.end - 1,
+                    node: type === 'rewrite' ? decryptedUrl : encryptUrl(decryptedUrl),
+                });
+            }
+        }
+    });
+
+    js.on(Syntax.CallExpression, (node, data, type) => {
+        // Rewrite URLs in call expressions (e.g., fetch, XMLHttpRequest)
+        if (node.callee && node.callee.name && ['fetch', 'XMLHttpRequest', 'open'].includes(node.callee.name)) {
+            node.arguments.forEach(arg => {
+                if (arg.type === 'Literal' && typeof arg.value === 'string') {
+                    const decryptedUrl = decryptUrl(arg.value);
+                    if (decryptedUrl !== arg.value) {
+                        data.changes.push({
+                            start: arg.start + 1,
+                            end: arg.end - 1,
+                            node: type === 'rewrite' ? decryptedUrl : encryptUrl(decryptedUrl),
+                        });
+                    }
+                }
+            });
+        }
+    });
+
+    js.on(Syntax.MemberExpression, (node, data, type) => {
+        // Rewrite URLs in window.location or document.location assignments
+        if (node.object && node.object.name === 'location') {
+            if (node.property && node.property.name && node.property.name === 'href') {
+                const parent = node.parent;
+                if (parent && parent.type === 'AssignmentExpression' && parent.right.type === 'Literal' && typeof parent.right.value === 'string') {
+                    const decryptedUrl = decryptUrl(parent.right.value);
+                    if (decryptedUrl !== parent.right.value) {
+                        data.changes.push({
+                            start: parent.right.start + 1,
+                            end: parent.right.end - 1,
+                            node: type === 'rewrite' ? decryptedUrl : encryptUrl(decryptedUrl),
+                        });
+                    }
+                }
+            }
         }
     });
 }

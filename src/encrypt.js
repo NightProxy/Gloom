@@ -12,9 +12,6 @@ class crypts {
   }
 
   static decode(str) {
-    if (str.charAt(str.length - 1) === "/") {
-      str = str.slice(0, -1);
-    }
     return decodeURIComponent(
       str
         .split("")
