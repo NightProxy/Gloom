@@ -41,7 +41,7 @@ export async function createGloomServer(server) {
 
         let pathAfterPrefix;
         try {
-          pathAfterPrefix = decodeURIComponent(reqUrl.pathname.slice(config.prefix.length));
+          pathAfterPrefix = decryptUrl(reqUrl.pathname.slice(config.prefix.length));
         } catch (err) {
           console.error(`Failed to decode URL: ${err}`);
           handleError(err, req, res);
@@ -50,10 +50,10 @@ export async function createGloomServer(server) {
 
         let proxiedUrl;
         try {
-          proxiedUrl = decryptUrl(pathAfterPrefix);
+          proxiedUrl = decodeURIComponent(pathAfterPrefix);
         } catch (err) {
           console.error(`Failed to decrypt URL: ${err}`);
-          handleError(err, req, res);
+          handleError(err, req, res, proxiedUrl);
           return;
         }
 
