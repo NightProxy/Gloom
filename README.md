@@ -1,2 +1,2 @@
 # Gloom
-A proxy like UV or rammerhead, but mainly server side.
+A proxy like UV, Rammerhead, or Scramjet.
