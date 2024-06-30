@@ -1,7 +1,5 @@
 import http from 'http';
 import express from 'express';
-import { createGloomServer } from './src/server.js';
-import { config } from './src/config.js';
 import path from 'path';
 import cors from 'cors';
 import chalk from 'chalk';
@@ -27,10 +25,8 @@ const PORT = process.env.PORT || 8080;
   });
 
   const server = http.createServer((req, res) => {
-    if (!req.url.startsWith(config.prefix)){app(req, res)};
+    app(req, res);
   });
-
-  await createGloomServer(server);
 
   server.on("listening", () => {
     const address = server.address();

@@ -1,21 +1,33 @@
 {
   "name": "gloom-proxy",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "type": "module",
-  "description": "A simple proxy server that rewrites URLs and handles encryption.",
+  "description": "A service worker based proxy that has high customizability.",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "build": "node build.js",
+    "dev": "node build.js --dev"
   },
   "dependencies": {
+    "@mercuryworkshop/bare-mux": "^1.1.0",
+    "@tomphttp/bare-client": "^2.2.0-alpha",
+    "css-tree": "^2.3.1",
+    "esbuild": "^0.18.11",
+    "eslint": "^8.28.0",
+    "esotope-hammerhead": "^0.6.4",
+    "events": "^3.3.0",
+    "idb": "^7.1.1",
+    "meriyah": "^4.3.7",
+    "mime-db": "^1.52.0",
+    "parse5": "^7.1.2",
+    "prettier": "^2.8.0",
+    "rimraf": "^5.0.1",
+    "set-cookie-parser": "^2.6.0",
     "chalk": "^5.2.0",
     "content-type": "^1.0.5",
     "cors": "^2.8.5",
-    "esotope-hammerhead": "^0.6.8",
-    "express": "^4.17.1",
-    "http-proxy": "^1.18.1",
-    "node-fetch": "^3.1.0",
-    "node-html-parser": "^3.3.4"
+    "express": "^4.17.1"
   },
   "author": "Amplify",
   "license": "ISC"

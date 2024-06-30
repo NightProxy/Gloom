@@ -1,5 +1,5 @@
-import { config } from './config.js';
-import { encryptUrl, decryptUrl } from './encrypt.js';
+import { config } from '../config.js';
+import { encryptUrl, decryptUrl } from './codecs.js';
 import pkg from 'esotope-hammerhead';
 const { Syntax, parseScript } = pkg;
 
