@@ -1,20 +1,10 @@
-import { BareClient as BareMuxClient} from "@mercuryworkshop/bare-mux";
+import { BareClient as BareMuxClient } from "@mercuryworkshop/bare-mux";
 import { BareResponseFetch } from "@mercuryworkshop/bare-mux";
 import { BareClient } from '@tomphttp/bare-client';
 import { BareResponseFetch as BareClientFetch } from '@tomphttp/bare-client';
 import { encryptUrl, decryptUrl } from './rewrite/codecs';
 
-declare global {
-  interface Window {
-    GloomWorker: any;
-  }
-}
-
 self.GloomWorker = class GloomWorker {
-  client: any;
-  config: any;
-  blockList: Set<string>;
-
   constructor(config = self.__gloom$config) {
     if (!config.prefix) config.prefix = "/gloom/";
     if (!config.encoding) config.encoding = "xor";
@@ -29,11 +19,11 @@ self.GloomWorker = class GloomWorker {
     this.blockList = new Set(config.blockList || []);
   }
 
-  route({ request }: FetchEvent) {
+  route({ request }) {
     return request.url.startsWith(location.origin + this.config.prefix);
   }
 
-  async fetch({ request }: FetchEvent) {
+  async fetch({ request }) {
     const urlParam = new URLSearchParams(new URL(request.url).search);
 
     if (urlParam.has("url")) {
@@ -50,7 +40,7 @@ self.GloomWorker = class GloomWorker {
         return new Response("Forbidden", { status: 403 });
       }
 
-      const response: BareResponseFetch = await this.client.fetch(url, {
+      const response = await this.client.fetch(url, {
         method: request.method,
         body: request.body,
         headers: request.headers,
@@ -74,7 +64,7 @@ self.GloomWorker = class GloomWorker {
     }
   }
 
-  async processResponseBody(response: BareResponseFetch, request: Request): Promise<any> {
+  async processResponseBody(response, request) {
     switch (request.destination) {
       case "iframe":
       case "document":
@@ -88,32 +78,31 @@ self.GloomWorker = class GloomWorker {
     }
   }
 
-  rewriteHeaders(headers: HeadersInit, url: URL): HeadersInit {
+  rewriteHeaders(headers, url) {
     // Implement your headers rewrite logic here
     return headers;
   }
 
-  rewriteHtml(html: string, url: URL): string {
+  rewriteHtml(html, url) {
     // Implement your HTML rewrite logic here
     return html;
   }
 
-  rewriteJs(js: string, url: URL): string {
+  rewriteJs(js, url) {
     // Implement your JS rewrite logic here
     return js;
   }
 
-  rewriteCss(css: string, url: URL): string {
+  rewriteCss(css, url) {
     // Implement your CSS rewrite logic here
     return css;
   }
 
-  isBlocked(url: string): boolean {
+  isBlocked(url) {
     return this.blockList.has(new URL(url).hostname);
   }
 
-
-  displayError(err: unknown, fetchedURL: string) {
+  displayError(err, fetchedURL) {
     const headers = {
       "content-type": "text/html",
     };
@@ -123,52 +112,52 @@ self.GloomWorker = class GloomWorker {
 
     const trace = String(err);
     const script = `
-            errorTrace.value = ${JSON.stringify(trace)};
-            fetchedURL.textContent = ${JSON.stringify(fetchedURL)};
-            for (const node of document.querySelectorAll("#hostname")) node.textContent = ${JSON.stringify(location.hostname)};
-            reload.addEventListener("click", () => location.reload());
-            version.textContent = "0.0.1";
-        `;
+      errorTrace.value = ${JSON.stringify(trace)};
+      fetchedURL.textContent = ${JSON.stringify(fetchedURL)};
+      for (const node of document.querySelectorAll("#hostname")) node.textContent = ${JSON.stringify(location.hostname)};
+      reload.addEventListener("click", () => location.reload());
+      version.textContent = "0.0.1";
+    `;
 
     const errorPage = `
-            <!DOCTYPE html>
-            <html>
-            <head>
-            <meta charset="utf-8" />
-            <title>Error</title>
-            <style>* { background-color: white }</style>
-            </head>
-            <body>
-            <h1 id="errorTitle">Error processing your request</h1>
-            <hr />
-            <p>Failed to load <b id="fetchedURL"></b></p>
-            <p id="errorMessage">Internal Server Error</p>
-            <textarea id="errorTrace" cols="40" rows="10" readonly></textarea>
-            <p>Try:</p>
-            <ul>
-            <li>Checking your internet connection</li>
-            <li>Verifying you entered the correct address</li>
-            <li>Clearing the site data</li>
-            <li>Contacting <b id="hostname"></b>'s administrator</li>
-            <li>Verify the server isn't censored</li>
-            </ul>
-            <p>If you're the administrator of <b id="hostname"></b>, try:</p>
-            <ul>
-            <li>Restarting your server</li>
-            <li>Updating Gloom</li>
-            <li>Troubleshooting the error on the GitHub repository</li>
-            </ul>
-            <button id="reload">Reload</button>
-            <hr />
-            <p><i>Gloom v<span id="version"></span></i></p>
-            <script src="${'data:application/javascript,' + encodeURIComponent(script)}"></script>
-            </body>
-            </html>
-        `;
+      <!DOCTYPE html>
+      <html>
+      <head>
+      <meta charset="utf-8" />
+      <title>Error</title>
+      <style>* { background-color: white }</style>
+      </head>
+      <body>
+      <h1 id="errorTitle">Error processing your request</h1>
+      <hr />
+      <p>Failed to load <b id="fetchedURL"></b></p>
+      <p id="errorMessage">Internal Server Error</p>
+      <textarea id="errorTrace" cols="40" rows="10" readonly></textarea>
+      <p>Try:</p>
+      <ul>
+      <li>Checking your internet connection</li>
+      <li>Verifying you entered the correct address</li>
+      <li>Clearing the site data</li>
+      <li>Contacting <b id="hostname"></b>'s administrator</li>
+      <li>Verify the server isn't censored</li>
+      </ul>
+      <p>If you're the administrator of <b id="hostname"></b>, try:</p>
+      <ul>
+      <li>Restarting your server</li>
+      <li>Updating Gloom</li>
+      <li>Troubleshooting the error on the GitHub repository</li>
+      </ul>
+      <button id="reload">Reload</button>
+      <hr />
+      <p><i>Gloom v<span id="version"></span></i></p>
+      <script src="${'data:application/javascript,' + encodeURIComponent(script)}"></script>
+      </body>
+      </html>
+    `;
 
     return new Response(errorPage, {
       status: 500,
       headers: headers,
     });
   }
-}
+};
