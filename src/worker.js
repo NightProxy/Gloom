@@ -1,7 +1,5 @@
 import { BareClient as BareMuxClient } from "@mercuryworkshop/bare-mux";
-import { BareResponseFetch } from "@mercuryworkshop/bare-mux";
 import { BareClient } from '@tomphttp/bare-client';
-import { BareResponseFetch as BareClientFetch } from '@tomphttp/bare-client';
 import { encryptUrl, decryptUrl } from './rewrite/codecs';
 
 self.GloomWorker = class GloomWorker {
