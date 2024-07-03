@@ -1,8 +1,16 @@
-import http from 'http';
-import express from 'express';
-import path from 'path';
-import cors from 'cors';
-import chalk from 'chalk';
+import express from "express";
+import http from "node:http";
+import { uvPath } from "@titaniumnetwork-dev/ultraviolet";
+import { createBareServer } from "@tomphttp/bare-server-node";
+import createRammerhead from "rammerhead/src/server/index.js";
+import { epoxyPath } from "@mercuryworkshop/epoxy-transport";
+import { libcurlPath } from "@mercuryworkshop/libcurl-transport";
+import { baremuxPath } from "@mercuryworkshop/bare-mux";
+import chalk from "chalk";
+import { hostname } from "node:os";
+import cors from "cors";
+import path from "node:path";
+import wisp from "wisp-server-node";
 
 const PORT = process.env.PORT || 8080;
 
@@ -10,6 +18,8 @@ const PORT = process.env.PORT || 8080;
   var app = express();
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
+  const bare = createBareServer("/bare/");
+
   app.use(express.static(process.cwd() + "/public"));
 
   app.get("/", (req, res) => {

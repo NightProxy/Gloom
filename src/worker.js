@@ -1,7 +1,5 @@
 import { BareClient as BareMuxClient } from "@mercuryworkshop/bare-mux";
-import { BareResponseFetch } from "@mercuryworkshop/bare-mux";
 import { BareClient } from '@tomphttp/bare-client';
-import { BareResponseFetch as BareClientFetch } from '@tomphttp/bare-client';
 import { encryptUrl, decryptUrl } from './rewrite/codecs';
 
 self.GloomWorker = class GloomWorker {
@@ -40,15 +38,43 @@ self.GloomWorker = class GloomWorker {
         return new Response("Forbidden", { status: 403 });
       }
 
-      const response = await this.client.fetch(url, {
-        method: request.method,
-        body: request.body,
-        headers: request.headers,
-        credentials: "omit",
-        mode: request.mode === "cors" ? request.mode : "same-origin",
-        cache: request.cache,
-        redirect: request.redirect,
-      });
+      let Clientreq = new Request(fetchedURL, {
+        headers: requestCtx.headers,
+        method: requestCtx.method,
+        body: requestCtx.body,
+        credentials: requestCtx.credentials,
+        mode:
+            location.origin !== requestCtx.address.origin
+                ? 'cors'
+                : requestCtx.mode,
+        cache: requestCtx.cache,
+        redirect: requestCtx.redirect,
+    });
+
+    if (typeof this.config.middleware === 'function') {
+        const middleware = this.config.middleware(Clientreq);
+
+        if (middleware instanceof Response) {
+            return middleware;
+        } else if (middleware instanceof Request) {
+            // The middleware returned a modified request.
+            // You can continue processing the modified request.
+            Clientreq = middleware;
+        }
+    }
+
+    const response = await this.client.fetch(Clientreq, {
+        headers: requestCtx.headers,
+        method: requestCtx.method,
+        body: requestCtx.body,
+        credentials: requestCtx.credentials,
+        mode:
+            location.origin !== requestCtx.address.origin
+                ? 'cors'
+                : requestCtx.mode,
+        cache: requestCtx.cache,
+        redirect: requestCtx.redirect,
+    });
 
       const responseBody = await this.processResponseBody(response, request);
       const responseHeaders = this.rewriteHeaders(response.rawHeaders, url);
