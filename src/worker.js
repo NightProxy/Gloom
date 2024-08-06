@@ -21,62 +21,42 @@ self.GloomWorker = class GloomWorker {
   }
 
   async fetch({ request }) {
-    const urlParam = new URLSearchParams(new URL(request.url).search);
-
-    if (urlParam.has("url")) {
-      return Response.redirect(encryptUrl(urlParam.get("url")));
-    }
-
     try {
-      const encodedUrl = request.url.split(this.config.prefix)[1];
-      if (!encodedUrl) throw new Error("Invalid URL encoding");
+      const urlToBeEncoded = request.url.split(this.config.prefix)[1];
+      if (!urlToBeEncoded) throw new Error("Invalid URL encoding");
 
-      const url = decryptUrl(encodedUrl);
+      const url = decryptUrl(urlToBeEncoded);
 
       if (this.isBlocked(url)) {
         return new Response("Forbidden", { status: 403 });
       }
 
-      let Clientreq = new Request(fetchedURL, {
-        headers: requestCtx.headers,
-        method: requestCtx.method,
-        body: requestCtx.body,
-        credentials: requestCtx.credentials,
-        mode:
-            location.origin !== requestCtx.address.origin
-                ? 'cors'
-                : requestCtx.mode,
-        cache: requestCtx.cache,
-        redirect: requestCtx.redirect,
-    });
+      let clientRequest = new Request(url, {
+        headers: request.headers,
+        method: request.method,
+        body: request.body,
+        credentials: request.credentials,
+        mode: location.origin !== new URL(url).origin ? 'cors' : request.mode,
+        cache: request.cache,
+        redirect: request.redirect,
+      });
 
-    if (typeof this.config.middleware === 'function') {
-        const middleware = this.config.middleware(Clientreq);
+      if (typeof this.config.middleware === 'function') {
+        const middleware = await this.config.middleware(clientRequest);
 
         if (middleware instanceof Response) {
-            return middleware;
+          return middleware;
         } else if (middleware instanceof Request) {
-            // The middleware returned a modified request.
-            // You can continue processing the modified request.
-            Clientreq = middleware;
+          // The middleware returned a modified request.
+          // You can continue processing the modified request.
+          clientRequest = middleware;
         }
-    }
+      }
 
-    const response = await this.client.fetch(Clientreq, {
-        headers: requestCtx.headers,
-        method: requestCtx.method,
-        body: requestCtx.body,
-        credentials: requestCtx.credentials,
-        mode:
-            location.origin !== requestCtx.address.origin
-                ? 'cors'
-                : requestCtx.mode,
-        cache: requestCtx.cache,
-        redirect: requestCtx.redirect,
-    });
+      const response = await this.client.fetch(clientRequest);
 
       const responseBody = await this.processResponseBody(response, request);
-      const responseHeaders = this.rewriteHeaders(response.rawHeaders, url);
+      const responseHeaders = this.rewriteHeaders(response.headers, url);
 
       return new Response(responseBody, {
         headers: responseHeaders,

@@ -1,6 +1,6 @@
 const config = self.__gloom$config;
 class crypts {
-  static encode(str) {
+  static xorEncode(str) {
     return encodeURIComponent(
       str
         .toString()
@@ -10,7 +10,7 @@ class crypts {
     );
   }
 
-  static decode(str) {
+  static xorDecode(str) {
     return decodeURIComponent(
       str
         .split("")
@@ -18,28 +18,42 @@ class crypts {
         .join("")
     );
   }
+  static base64Encode(str) {
+    if (!str){
+      return str;
+    }
+    str = str.toString();
+    return decodeURIComponent(btoa(str))
+  }
+  static base64Decode(str) {
+    if (!str){
+      return str;
+    }
+    str = str.toString();
+    return atob(str);
+  }
 }
 
 export function encryptUrl(url) {
   switch (config.encoding) {
     case 'base64':
-      return Buffer.from(url).toString('base64');
+      return crypts.base64Encode(url);
     case 'xor':
-      return crypts.encode(url);
+      return crypts.xorEncode(url);
     case 'none':
     default:
-      return url;
+      return encodeURIComponent(url);
   }
 }
 
 export function decryptUrl(path) {
   switch (config.encoding) {
     case 'base64':
-      return Buffer.from(path, 'base64').toString('ascii');
+      return crypts.base64Decode(path);
     case 'xor':
-      return crypts.decode(path);
+      return crypts.xorDecode(path);
     case 'none':
     default:
-      return path;
+      return decodeURIComponent(path);
   }
 }
